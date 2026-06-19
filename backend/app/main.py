@@ -14,13 +14,12 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "diseaseprediction-phi.vercel.app"
+        "https://diseaseprediction-phi.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # -----------------------------
 # DATABASE DEPENDENCY
 # -----------------------------
