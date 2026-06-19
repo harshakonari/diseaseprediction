@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./App.css";
 
-const API = "https://disease-backend.onrender.com";
+const API = "https://diseaseprediction-45m8.onrender.com";
 
 const diseaseFields = {
   "Heart Disease": [
