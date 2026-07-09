@@ -6,7 +6,6 @@ from .database import SessionLocal, engine
 from . import models
 from predict_engine import predict_all
 from fastapi.middleware.cors import CORSMiddleware
-import json
 
 models.Base.metadata.create_all(bind=engine, checkfirst=True)
 
@@ -14,8 +13,11 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://diseaseprediction-phi.vercel.app"
+         "https://diseaseprediction-phi.vercel.app",
+         "http://localhost:5173",
+         "http://127.0.0.1:5173"
     ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,39 +39,39 @@ def get_db():
 class PatientData(BaseModel):
 
     # -------- HEART --------
-    age: int
-    sex: int
-    cp: int
-    trestbps: float
-    chol: float
-    fbs: int
-    restecg: int
-    thalach: float
-    exang: int
-    oldpeak: float
-    slope: int
-    ca: int
-    thal: int
+    age: int = 0
+    sex: int = 0
+    cp: int = 0
+    trestbps: float = 0
+    chol: float = 0
+    fbs: int = 0
+    restecg: int = 0
+    thalach: float = 0
+    exang: int = 0
+    oldpeak: float = 0
+    slope: int = 0
+    ca: int = 0
+    thal: int = 0
 
     # -------- DIABETES --------
-    pregnancies: int
-    glucose: float
-    bloodpressure: float
-    skinthickness: float
-    insulin: float
-    bmi: float
-    dpf: float
+    pregnancies: int = 0
+    glucose: float = 0
+    bloodpressure: float = 0
+    skinthickness: float = 0
+    insulin: float = 0
+    bmi: float = 0
+    dpf: float = 0
 
     # -------- LIVER --------
-    gender: int
-    total_bilirubin: float
-    direct_bilirubin: float
-    alkaline_phosphotase: float
-    alamine_aminotransferase: float
-    aspartate_aminotransferase: float
-    total_proteins: float
-    albumin: float
-    albumin_globulin_ratio: float
+    gender: int = 0
+    total_bilirubin: float = 0
+    direct_bilirubin: float = 0
+    alkaline_phosphotase: float = 0
+    alamine_aminotransferase: float = 0
+    aspartate_aminotransferase: float = 0
+    total_proteins: float = 0
+    albumin: float = 0
+    albumin_globulin_ratio: float = 0
 
 
 # -----------------------------
@@ -79,7 +81,7 @@ class PatientData(BaseModel):
 def predict(data: PatientData, db: Session = Depends(get_db)):
 
     # Convert to dictionary
-    input_data = data.dict()
+    input_data = data.model_dump()
 
     # Run all ML models
     results = predict_all(input_data)
@@ -105,12 +107,6 @@ def predict(data: PatientData, db: Session = Depends(get_db)):
         db.add(patient)
         db.commit()
         db.refresh(patient)
-        
-
-        db.add(patient)
-        db.commit()
-        db.refresh(patient)
-
     # ------------------------------
     # SAVE ASSESSMENT
     # ------------------------------

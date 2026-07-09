@@ -1,18 +1,18 @@
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# ==============================
-# 🔥 YOUR SUPABASE DATABASE URL
-# ==============================
-DATABASE_URL = "postgresql+psycopg2://postgres:%40Harsha%20k12@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres"
+# Set DATABASE_URL when you want to use Postgres/Supabase.
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./diseaseprediction.db")
 
-engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10
-)
+engine_kwargs = {}
+if DATABASE_URL.startswith("sqlite"):
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+
+engine = create_engine(DATABASE_URL, **engine_kwargs)
+
 
 SessionLocal = sessionmaker(
     autocommit=False,

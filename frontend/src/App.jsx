@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./App.css";
 
-const API = "https://diseaseprediction-45m8.onrender.com";
+const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 const diseaseFields = {
   "Heart Disease": [
@@ -223,10 +223,12 @@ const nextQuestion=()=>{
 
 const field=predictFields[currentQuestion];
 
-setFormData({
+const updatedFormData={
 ...formData,
 [field]:Number(answer)
-});
+};
+
+setFormData(updatedFormData);
 
 setAnswer("");
 
@@ -234,17 +236,17 @@ if(currentQuestion+1<predictFields.length){
 setCurrentQuestion(currentQuestion+1);
 }
 else{
-predictDisease();
+predictDisease(updatedFormData);
 }
 
 };
 
-const predictDisease=async()=>{
+const predictDisease=async(currentFormData=formData)=>{
 
 let payload={};
 
 allFields.forEach(field=>{
-payload[field]=formData[field] ? formData[field] : 0;
+payload[field]=currentFormData[field] ?? 0;
 });
 
 const res=await fetch(`${API}/predict`,{
@@ -259,6 +261,10 @@ setResult(data.top_prediction);
 setStep("result");
 
 };
+
+const confidencePercent=result
+? (result.confidence > 1 ? result.confidence : result.confidence*100)
+: 0;
 
 return(
 
@@ -370,7 +376,7 @@ Next
 </div>
 
 <div className="result-confidence">
-Confidence: {(result.confidence*100).toFixed(2)}%
+Confidence: {confidencePercent.toFixed(2)}%
 </div>
 
 <div className="result-risk">
