@@ -188,6 +188,8 @@ symptoms:""
 const [formData,setFormData]=useState({});
 const [answer,setAnswer]=useState("");
 const [result,setResult]=useState(null);
+const [error,setError]=useState("");
+const [isLoading,setIsLoading]=useState(false);
 
 const handleStartChange=(e)=>{
 setStartData({...startData,[e.target.name]:e.target.value});
@@ -195,7 +197,19 @@ setStartData({...startData,[e.target.name]:e.target.value});
 
 const startAssessment=async()=>{
 
-const symptomsArray=startData.symptoms.split(",").map(s=>s.trim());
+setError("");
+setIsLoading(true);
+
+try{
+const symptomsArray=startData.symptoms
+.split(",")
+.map(s=>s.trim().toLowerCase())
+.filter(Boolean);
+
+if(!startData.age || symptomsArray.length===0){
+setError("Please enter your age and at least one symptom.");
+return;
+}
 
 const res=await fetch(`${API}/start-assessment`,{
 method:"POST",
@@ -207,6 +221,11 @@ symptoms:symptomsArray
 })
 });
 
+if(!res.ok){
+setError("Could not start the assessment. Please try again.");
+return;
+}
+
 const data=await res.json();
 
 if(data.probable_diseases.length>0){
@@ -215,6 +234,17 @@ const disease=data.probable_diseases[0];
 
 setPredictFields(diseaseFields[disease]);
 setStep("announcement");
+}
+else{
+setError("No matching symptoms found. Try symptoms like chest pain, fatigue, frequent urination, increased thirst, yellow skin, or abdominal pain.");
+}
+
+}
+catch{
+setError("Network error. Please wait a moment and try again.");
+}
+finally{
+setIsLoading(false);
 }
 
 };
@@ -249,16 +279,34 @@ allFields.forEach(field=>{
 payload[field]=currentFormData[field] ?? 0;
 });
 
+setError("");
+setIsLoading(true);
+
+try{
 const res=await fetch(`${API}/predict`,{
 method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify(payload)
 });
 
+if(!res.ok){
+setError("Could not complete prediction. Please try again.");
+setStep("questions");
+return;
+}
+
 const data=await res.json();
 
 setResult(data.top_prediction);
 setStep("result");
+}
+catch{
+setError("Network error. Please wait a moment and try again.");
+setStep("questions");
+}
+finally{
+setIsLoading(false);
+}
 
 };
 
@@ -287,7 +335,7 @@ return(
 
 <div className="form-group">
 <label>Gender</label>
-<input type="text" name="gender" placeholder="male / female" onChange={handleStartChange}/>
+<input type="text" name="gender" placeholder="male / female" autoCapitalize="none" onChange={handleStartChange}/>
 </div>
 
 <div className="form-group">
@@ -296,12 +344,15 @@ return(
 type="text"
 name="symptoms"
 placeholder="chest pain, fatigue"
+autoCapitalize="none"
 onChange={handleStartChange}
 />
 </div>
 
-<button className="button" onClick={startAssessment}>
-Start Assessment
+{error && <div className="error-box">{error}</div>}
+
+<button className="button" onClick={startAssessment} disabled={isLoading}>
+{isLoading ? "Starting..." : "Start Assessment"}
 </button>
 
 </>
@@ -357,8 +408,10 @@ value={answer}
 onChange={(e)=>setAnswer(e.target.value)}
 />
 
-<button className="button" onClick={nextQuestion}>
-Next
+{error && <div className="error-box">{error}</div>}
+
+<button className="button" onClick={nextQuestion} disabled={isLoading}>
+{isLoading ? "Checking..." : "Next"}
 </button>
 
 </>

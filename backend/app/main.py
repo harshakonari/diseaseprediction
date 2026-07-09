@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import List
 from .database import SessionLocal, engine
 from . import models
 from predict_engine import predict_all
@@ -22,6 +21,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+def health_check():
+    return {"status": "ok"}
+
 # -----------------------------
 # DATABASE DEPENDENCY
 # -----------------------------
@@ -158,6 +162,11 @@ class BasicAssessment(BaseModel):
 
 @app.post("/start-assessment")
 def start_assessment(data: BasicAssessment):
+    symptoms = {
+        symptom.strip().lower()
+        for symptom in data.symptoms
+        if symptom and symptom.strip()
+    }
 
     symptom_map = {
         "Heart Disease": ["chest pain", "shortness of breath", "fatigue","fever"],
@@ -168,7 +177,7 @@ def start_assessment(data: BasicAssessment):
     disease_scores = {}
 
     for disease, symptom_list in symptom_map.items():
-        score = len(set(data.symptoms).intersection(symptom_list))
+        score = len(symptoms.intersection(symptom_list))
         disease_scores[disease] = score
 
     sorted_diseases = sorted(disease_scores.items(), key=lambda x: x[1], reverse=True)
